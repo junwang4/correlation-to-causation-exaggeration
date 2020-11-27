@@ -4,14 +4,25 @@ This is a collaborative project with the School of Information at Syracuse Unive
 
 **ABSTRACT**
 
-Press releases have an increasingly strong influence on media coverage of health research; how- ever, they have been found to contain seriously exaggerated claims that can misinform the public and undermine public trust in science. In this study we propose an NLP approach to identify ex- aggerated causal claims made in health press releases that report on observational studies, which are designed to establish correlational findings, but are often exaggerated as causal. We devel- oped a new corpus and trained models that can identify causal claims in the main statements in a press release. By comparing the claims made in a press release with the corresponding claims in the original research paper, we found that 22% of press releases made exaggerated causal claims from correlational findings in observational studies. Furthermore, universities exagger- ated more often than journal publishers by a ratio of 1.5 to 1. Encouragingly, the exaggeration rate has slightly decreased over the past 10 years, despite the increase of the total number of press releases. More research is needed to understand the cause of the decreasing pattern.
+Press releases have an increasingly strong influence on media coverage of health research;
+however, they have been found to contain seriously exaggerated claims that can misinform the public and undermine public trust in science.
+In this study we propose an NLP approach to identify exaggerated causal claims made in health press releases 
+that report on observational studies, which are designed to establish correlational findings,
+but are often exaggerated as causal. 
+We developed a new corpus and trained models that can identify causal claims in the main statements in a press release.
+By comparing the claims made in a press release with the corresponding claims in the original research paper, 
+we found that 22% of press releases made exaggerated causal claims from correlational findings in observational studies.
+Furthermore, universities exaggerated more often than journal publishers by a ratio of 1.5 to 1.
+Encouragingly, the exaggeration rate has slightly decreased over the past 10 years,
+despite the increase of the total number of press releases. 
+More research is needed to understand the cause of the decreasing pattern.
 
 
 ### How to cite ###
 Bei Yu, Jun Wang, Lu Guo, and Yingya Li (2020). 
 Measuring Correlation-to-Causation Exaggeration in Press Releases. COLING'2020, pages ###-###,
-December 8-13, 2020, online. [PDF](https://www.aclweb.org/anthology/D19-1473.pdf) // to be available
-
+December 8-13, 2020, online.
+[PDF](https://www.aclweb.org/anthology/D19-1473.pdf) // to be available
 
 ```
 @inproceedings{yu2020exaggerationCOLING,
@@ -24,21 +35,43 @@ December 8-13, 2020, online. [PDF](https://www.aclweb.org/anthology/D19-1473.pdf
 }
 ```
 
+Bei Yu, Yingya Li and Jun Wang (2019).
+Detecting Causal Language Use in Science Findings. EMNLP'2019, pages 4656–4666, Hong Kong, China, November 3–7, 2019. 
+[PDF](https://www.aclweb.org/anthology/D19-1473.pdf)
+
+```
+@inproceedings{yu2019EMNLPCausalLanguage,
+  title={Detecting Causal Language Use in Science Findings},
+  author={Yu, Bei and Li, Yingya and Wang, Jun},
+  booktitle={Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP)},
+  pages={4656-4666},
+  year={2019},
+  url={https://www.aclweb.org/anthology/D19-1473.pdf}
+}
+```
+
 ## Get started
 
-STEP 0. Prerequisite
+### STEP 0. Prerequisite
 
-Install bert-sklearn from 
-https://github.com/junwang4/bert-sklearn-with-class-weight
-(for handling imbalanced classes)
+My environment is Linux box (Ubuntu 16.04) with a 1080Ti GPU.
 
 ```
 pip install fire
 pip install lightgbm
 ```
 
+Install bert-sklearn
+https://github.com/junwang4/bert-sklearn-with-class-weight
+(for handling imbalanced classes)
+```
+git clone https://github.com/junwang4/bert-sklearn-with-class-weight
+cd bert-sklearn-with-class-weight
+pip install .
+```
 
-STEP 1. 
+
+### STEP 1. Get the repo of this project from github
 
 ```
 git clone https://github.com/junwang4/correlation-to-causation-exaggeration
@@ -64,9 +97,9 @@ ls -l
 cd code
 ```
 
-STEP 2. For PubMed research papers
+### STEP 2. For PubMed research papers
 
-2.1 Train a BERT classification model for pubmed conclusion sentences
+#### 2.1 Train a fine-tuned BERT model for use in classifying the claim strength of the conclusion sentences in a paper abstract
 
 ```
 python run.py sentence_claim_strength_classification --data_type=pubmed --data_augmentation=False --task=train_one_full_model
@@ -75,8 +108,8 @@ This will take as input an annotated dataset `data/annotated_pubmed.csv`,
 and output a BERT model in folder 
 `code/working/pubmed/model_pubmed_biobert`
 
-2.2 Apply the above trained model to the conclusion sentences extracted from the 
-structured abstracts of 20683 observational studies
+#### 2.2 Apply the above trained model to the conclusion sentences extracted from the 
+structured abstracts of 20,683 observational studies
 
 ```
 python run.py sentence_claim_strength_classification --data_type=pubmed --data_augmentation=False --task=apply_one_full_model_to_new_sentences
@@ -85,7 +118,7 @@ This will take as input the file `data/20683_pubmed_conclusion_sentences.csv`,
 and output a prediction csv file in folder 
  `code/working/pubmed/pred_pubmed_biobert`
 
-2.3 To evaluate the performance of the model, say, 5-fold cross-validation 
+#### 2.3 To evaluate the performance of the model, say, 5-fold cross-validation 
 
 First, generate a prediction file as the result of training and testing each of the 5 folds
 ```
@@ -93,9 +126,8 @@ python run.py sentence_claim_strength_classification --data_type=pubmed --data_a
 ```
 
 Second, display the evaluation results, including:
-- confusion matrix
-- classification report
-- error analysis report, saved in an HTML file located at 
+- a classification report
+- a error analysis report, saved in an HTML file located at 
 `code/working/html`
 
 ```
@@ -104,15 +136,6 @@ python run.py sentence_claim_strength_classification --data_type=pubmed --data_a
 In the case of using the default setting given in file `code/settings.ini`,
 we have the following result:
 ```
-Confusion Matrix:
-
-[[1202   78   33   43]
- [  52  915   11   20]
- [   9    2  193    9]
- [  29   20   15  430]]
-
-Classification Report:
-
               precision    recall  f1-score   support
 
            0      0.930     0.886     0.908      1356
@@ -125,9 +148,9 @@ Classification Report:
 weighted avg      0.898     0.895     0.896      3061
 ```
 
-STEP 3. For EurekAlert press releases
+### STEP 3. For EurekAlert press releases
 
-3.1 Train a BERT classification model for the headline and the 1st two sentences in the press releases
+#### 3.1 Train a fine-tuned BERT model for use in classifying the claim strength of the headline and the 1st two sentences in a press release
 
 ```
 python run.py sentence_claim_strength_classification --data_type=eureka --data_augmentation=True --task=train_one_full_model
@@ -136,7 +159,7 @@ This will take as input an annotated dataset `data/annotated_eureka.csv`,
 and output a BERT model in folder 
 `code/working/eureka/model_pubmed_biobert`
 
-3.2 Apply the above trained model to the headline and the 1st two sentences in associated 21342 press releases
+#### 3.2 Apply the above trained model to the headline and the 1st two sentences in the 21,342 press releases that reported the above 20,683 papers
 
 ```
 python run.py sentence_claim_strength_classification --data_type=eureka --data_augmentation=True --task=apply_one_full_model_to_new_sentences
@@ -145,7 +168,7 @@ This will take as input the file `data/21342_eureka_beginning_sentences.csv`,
 and output a prediction csv file in folder 
  `code/working/eureka/pred_eureka_biobert`
 
-3.3 To evaluate the performance of the model, say, 5-fold cross-validation 
+#### 3.3 To evaluate the performance of the model, say, 5-fold cross-validation 
 
 First, generate a prediction file as the result of training and testing each of the 5 folds
 ```
@@ -153,9 +176,8 @@ python run.py sentence_claim_strength_classification --data_type=eureka --data_a
 ```
 
 Second, display the evaluation results, including:
-- confusion matrix
-- classification report
-- error analysis report, saved in an HTML file located at 
+- a classification report
+- a error analysis report, saved in an HTML file located at 
 `code/working/html`
 
 ```
@@ -164,15 +186,6 @@ python run.py sentence_claim_strength_classification --data_type=eureka --data_a
 In the case of using the default setting given in file `code/settings.ini`,
 we have the following result:
 ```
-Confusion Matrix:
-
-[[401  33  12  40]
- [ 51 652  10  25]
- [  6   4 271   3]
- [ 26  17   2 523]]
-
-Classification Report:
-
               precision    recall  f1-score   support
 
            0      0.829     0.825     0.827       486
@@ -186,43 +199,44 @@ weighted avg      0.890     0.890     0.890      2076
 ```
 
 
-STEP 4. Classify a PubMed paper as an observational study or not
+### STEP 4. Classify a PubMed paper as an observational study or not
 
-4.1 Train and test a LightGBM model
+#### 4.1 Train and test a LightGBM model
 
 ```
 python run.py observational_study_classification --task=train
 python run.py observational_study_classification --task=test
 ```
 
-4.2 Apply the above trained model to data
+#### 4.2 Apply the trained model to the above 20,683 pubmed abstracts to find those observational studies
 ```
 python run.py observational_study_classification --task=predict_pubmed_observational_study_for_press_releases
 ```
 
 
-STEP 5. Exaggeration analysis
+### STEP 5. Exaggeration analysis
 
-5.1 Aggregation from sentence to article level for both PubMed and Eureka, as well as merging the aggregated PubMed and Eureka results
+#### 5.1 Aggregate from sentence-level to article-level for both PubMed and Eureka, as well as merge the aggregated PubMed and Eureka results
 ```
 python run.py exaggeration_analysis --task=aggregate_from_sentence_to_article_level__and__merge_aggregated_pubmed_and_eureka
 ```
-Output
+Output (depending on setting)
 `working/COLING2020_aggregated_result_unanimous_three_claimConfidenceTH0.5_obsConfidenceTH0.5.csv`
 
 
-5.2 Generate three plots, as shown in Figure 3(a,b) and Figure 4 of the paper, based on the above aggregated/merged data
+#### 5.2 Generate three plots (as shown in Figure 3-a, 3-b and Figure 4 of our COLING'2020 paper), based on the above aggregated/merged data
 
 ```
 python run.py exaggeration_analysis --task=plot_trend_of_exaggeration
 python run.py exaggeration_analysis --task=plot_number_of_observational_studies_over_years
 python run.py exaggeration_analysis --task=plot_university_vs_journal
 ```
+Output folder: `working/figure/???.pdf`
 
 
 
 ## More about the data mentioned above
-#### PubMed research papers (specifically, the part of conclusion subsection in their structured abstracts)
+### PubMed research papers (specifically, the part of conclusion subsection in their structured abstracts)
 
 __Annotated corpus__ 
 
@@ -245,7 +259,7 @@ label = 2 : Conditional causal
 label = 3 : Direct causal
 ```
 
-__Conclusion sentences in the abstract of 20683 observational studies__
+__Conclusion sentences in the abstract of the 20,683 observational studies__
 
 `./data/20683_pubmed_conclusion_sentences.csv`
 
@@ -256,7 +270,7 @@ __Conclusion sentences in the abstract of 20683 observational studies__
 NOTE: If there are two or more sentences in `conclusion_sentences`, they are separated by a tab "\t".
 
  
-#### EurekAlert press releases
+### EurekAlert press releases
 __Annotated corpus__  
 
 `./data/annotated_eureka.csv`
@@ -278,7 +292,7 @@ label = 2 : Conditional causal
 label = 3 : Direct causal
 ```
 
-__headline and first two sentences in 21342 press releases__
+__headline and first two sentences in the 21,342 press releases__
 
 `./data/21342_eureka_beginning_sentences.csv`
 
@@ -298,11 +312,11 @@ __headline and first two sentences in 21342 press releases__
 </table>
 NOTE: The two sentences in `first_2_body_sentences` are separated by a tab "\t".
 
-#### 25,000 title/abstracts of observational studies vs. 25,000 title/abstracts of trials
+### 25,000 title/abstracts of observational studies vs. 25,000 title/abstracts of trials
 
 `./data/observational_vs_trial_study_labeled_1.csv`  # observational studies
 
-`./data/observational_vs_trial_study_labeled_0.csv` # trials
+`./data/observational_vs_trial_study_labeled_0.csv` # clinical trials
 
 <table>
 <tr><th>pmid</th><th>title</th><th>abstract_json</th><th>label</th></tr>
