@@ -298,10 +298,11 @@ __headline and first two sentences in 21342 press releases__
 </table>
 NOTE: The two sentences in `first_2_body_sentences` are separated by a tab "\t".
 
-__25,000 title/abstracts of observational studies vs. 25,000 title/abstracts of trials__
-`./data/observational_vs_trial_study_labeled_0.csv` # trials
+#### 25,000 title/abstracts of observational studies vs. 25,000 title/abstracts of trials
 
 `./data/observational_vs_trial_study_labeled_1.csv`  # observational studies
+
+`./data/observational_vs_trial_study_labeled_0.csv` # trials
 
 <table>
 <tr><th>pmid</th><th>title</th><th>abstract_json</th><th>label</th></tr>
