@@ -66,6 +66,21 @@ class ExaggerationAnalysis:
         return f'{self.working_folder}/pubmed/pred_pubmed_biobert/{TAG}_apply_epochs3.csv'
 
 
+    def save_contact_domain_name_frequency_for_manually_checking_sources_of_eureka_press_releases(self):
+        df = pd.read_csv(f'{self.data_folder}/{DATA_FILE_TO_WORK_EUREKA}', usecols='eaid contact institution'.split())
+        df.fillna('', inplace=True)
+        dt = df.groupby('contact').agg(freq=('contact', 'count'),
+            institutions = ('institution', lambda x: '|'.join([e for e in set(list(x)) if e])))\
+            .reset_index()
+        dt = dt[dt.contact.str.find('edu')<0]
+        dt = dt[dt.contact.str.find('ac.')<0]
+        dt = dt[~dt.contact.isin(helpers.KNOWN_JOURNAL_LIST)]
+        dt = dt.sort_values('freq', ascending=False)
+        fpath_out = f'{self.working_folder}/contact_domain_name_freq.csv'
+        dt.to_csv(fpath_out, index=False)
+        print('- out:', fpath_out)
+
+
     def _load_sentence_level_claim_strength_prediction_data_for_both_pubmed_and_eureka(self, nrows=None):
         fpath_claim_pubmed = self._get_fpath_of_pubmed_observational_conclusion_sentences_predicted_for_claim_strength()
         if not os.path.exists(fpath_claim_pubmed):
@@ -225,57 +240,25 @@ class ExaggerationAnalysis:
             'para_pm' : 'pm_sentences'
         })
 
-        df['eaid'] = df['eaid'].apply(lambda x: f'{x}.php')
-        cols = 'eaid pmid year ea_source ea_pred pm_pred ea_pred_detail pm_pred_detail ea_sentences pm_sentences'.split()
+        fpath_obs_pred = f'{self.working_folder}/{TAG}_{PREDICTED_OBSERVATIONAL_FILE_PUBMED}'
+        df_obs = pd.read_csv(fpath_obs_pred, dtype={'pmid':str})
+        print('\n- pubmed papers before applying observational study classifier:', len(df_obs))
+        df_obs = df_obs[df_obs.pred_proba >= self.observational_study_prediction_confidence_TH]
+        print('- pubmed papers after applying observational study classifier:', len(df_obs))
+
+        pmids_obs = set(df_obs.pmid.tolist())
+        df['is_observational_study'] = df.pmid.apply(lambda x: int(str(x) in pmids_obs))
+        print(df.is_observational_study.value_counts())
+
+        cols = 'eaid pmid is_observational_study year ea_source ea_pred pm_pred ea_pred_detail pm_pred_detail ea_sentences pm_sentences'.split()
         fpath_out = self._get_fpath_of_aggregated_pm_and_pr()
         df[cols].to_csv(fpath_out, index=False)
         print('- output:', fpath_out)
 
 
-    def save_contact_domain_name_frequency_for_manually_checking_sources_of_eureka_press_releases(self):
-        df = pd.read_csv(f'{self.data_folder}/{DATA_FILE_TO_WORK_EUREKA}', usecols='eaid contact institution'.split())
-        df.fillna('', inplace=True)
-        dt = df.groupby('contact').agg(freq=('contact', 'count'),
-                institutions = ('institution', lambda x: '|'.join([e for e in set(list(x)) if e])))\
-                .reset_index()
-        dt = dt[dt.contact.str.find('edu')<0]
-        dt = dt[dt.contact.str.find('ac.')<0]
-        dt = dt[~dt.contact.isin(helpers.KNOWN_JOURNAL_LIST)]
-        dt = dt.sort_values('freq', ascending=False)
-        fpath_out = f'{self.working_folder}/contact_domain_name_freq.csv'
-        dt.to_csv(fpath_out, index=False)
-        print('- out:', fpath_out)
-
-
-    '''
-    def _load_pm_pr_exagg_data_with_pr_institution(self):
-        df_ea_source = pd.read_csv(f'{self.data_folder}/21k_eureka_beginning_sentences.csv', usecols='eaid contact institution'.split())
-        df_ea_source.fillna('', inplace=True)
-        df_ea_source['ea_source'] = df_ea_source.apply(self.get_type_of_eureka_source, axis=1)
-        print(df_ea_source.ea_source.value_counts())
-        print(df_ea_source.head())
-
-        df = pd.read_csv(self._get_fpath_of_aggregated_pm_and_pr())
-        df['eaid'] = df['eaid'].apply(lambda x: f'{x}.php')
-        helpers.display_df_cnt(df, 'year', n=20)
-        df = df.merge(df_ea_source, how='left')
-        helpers.display_df_cnt(df, 'year', n=20)
-        return df
-    '''
-
-
     def load_preprocessed_exagg_data_that_are_observational_study(self, pm_claim_type_wanted=['correlational']):
-        fpath_obs_pred = f'{self.working_folder}/{TAG}_{PREDICTED_OBSERVATIONAL_FILE_PUBMED}'
-        df_obs = pd.read_csv(fpath_obs_pred)
-        print('\n- pubmed papers before applying observational study classifier:', len(df_obs))
-        df_obs = df_obs[df_obs.pred_proba >= self.observational_study_prediction_confidence_TH]
-        print('- pubmed papers after applying observational study classifier:', len(df_obs))
-
         df = pd.read_csv(self._get_fpath_of_aggregated_pm_and_pr())
-
-        df = df[df.pmid.isin(df_obs.pmid)]
-        #print(df.year.value_counts())
-        print('\n- press releases whose corresponding paper are predicted as observational studies:', len(df))
+        df = df[df.is_observational_study==1]
 
         if pm_claim_type_wanted != 'all':
             df = df[df.pm_pred.isin(pm_claim_type_wanted)]
@@ -509,8 +492,6 @@ class ExaggerationAnalysis:
 
 
     def _get_fig_fpath(self, fname):
-        #import socket
-        #if socket.gethostname().lower().find('macbook')>=0:
         folder = config.get('analysis', "EXPORT_FIGURE_FOLDER")
         helpers.get_or_create_dir(folder)
         return f'{folder}/__{fname}'
@@ -530,8 +511,8 @@ def main():
     #exagg.aggregate_from_sentence_to_article_level__and__merge_aggregated_pubmed_and_eureka()
 
     #exagg.plot_number_of_observational_studies_over_years()
-    exagg.plot_trend_of_exaggeration()
-    #exagg.plot_university_vs_journal()
+    #exagg.plot_trend_of_exaggeration()
+    exagg.plot_university_vs_journal()
 
 if __name__ == "__main__":
     tic = time.time()
